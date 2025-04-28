@@ -31,4 +31,4 @@ cd hand-gesture-recognition
 pip install mediapipe opencv-python numpy streamlit
 
 # Run the app
-streamlit run streamlit-app.py
+streamlit run app.py

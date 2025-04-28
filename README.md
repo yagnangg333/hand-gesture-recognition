@@ -28,7 +28,7 @@ git clone https://github.com/yourusername/hand-gesture-recognition.git
 cd hand-gesture-recognition
 
 # Install dependencies
-pip install mediapipe opencv-python numpy
+pip install mediapipe opencv-python numpy streamlit
 
 # Run the app
-python main.py
+streamlit run streamlit-app.py

@@ -32,3 +32,10 @@ pip install mediapipe opencv-python numpy streamlit
 
 # Run the app
 streamlit run app.py
+```
+
+![Screenshot 2025-04-28 133346](https://github.com/user-attachments/assets/32050714-1c7e-4229-ab98-5cc088d2d5d3)
+
+![Screenshot 2025-04-28 133359](https://github.com/user-attachments/assets/d659ac3b-35c3-4d5d-9a66-7ffbba76ad4f)
+
+![Screenshot 2025-04-28 133423](https://github.com/user-attachments/assets/46e73efb-570a-4dfb-b040-c1e4ef261b37)

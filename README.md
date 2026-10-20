@@ -91,6 +91,13 @@ pip install -r requirements.txt
 In `app.py` / `test.py`, click **Start Recognition** in the sidebar to open the webcam and **Stop** to release it.
 Changing a setting while running restarts the camera with the new values.
 
+### Screenshots
+![Screenshot 2025-04-28 133346](https://github.com/user-attachments/assets/32050714-1c7e-4229-ab98-5cc088d2d5d3)
+
+![Screenshot 2025-04-28 133359](https://github.com/user-attachments/assets/d659ac3b-35c3-4d5d-9a66-7ffbba76ad4f)
+
+![Screenshot 2025-04-28 133423](https://github.com/user-attachments/assets/46e73efb-570a-4dfb-b040-c1e4ef261b37)
+
 ### Collecting training data
 Use the **Data Logging** section of the sidebar (instead of the original `k`/`h`/`0-9` keys):
 choose *Logging Key Point* or *Logging Point History* and a **Class ID**. While logging is on, every

@@ -1,0 +1,9 @@
+# Tested with Python 3.12 (mediapipe 0.10.21 supports Python 3.9 - 3.12).
+# mediapipe is pinned because newer releases removed the mp.solutions API used here.
+mediapipe==0.10.21
+opencv-contrib-python==4.11.0.86
+numpy==1.26.4
+tensorflow==2.19.1
+streamlit==1.60.0
+# starlette>=1.0 breaks streamlit 1.60's media endpoint (video frames return HTTP 500)
+starlette==0.52.1

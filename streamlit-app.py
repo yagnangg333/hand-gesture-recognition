@@ -20,21 +20,24 @@ if run:
 
     stframe = st.empty()  # Placeholder for video feed
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            st.error("Failed to capture image from webcam.")
-            break
+    # Release the camera even when unchecking the box interrupts the loop
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                st.error("Failed to capture image from webcam.")
+                break
 
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = hands.process(frame)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = hands.process(frame)
 
-        if results.multi_hand_landmarks:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            if results.multi_hand_landmarks:
+                for hand_landmarks in results.multi_hand_landmarks:
+                    mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-        stframe.image(frame, channels="RGB")  # Display frame in Streamlit
-
-    cap.release()
+            stframe.image(frame, channels="RGB")  # Display frame in Streamlit
+    finally:
+        cap.release()
+        hands.close()
 
 st.sidebar.info("Click the checkbox to start the webcam.")

@@ -1,0 +1,199 @@
+{
+ "val": {
+  "accuracy": 0.705,
+  "macro_f1": 0.499,
+  "macro_f1_gestures": 0.442,
+  "per_class": {
+   "None": {
+    "precision": 0.943,
+    "recall": 0.677,
+    "f1": 0.788,
+    "support": 10281
+   },
+   "Nod": {
+    "precision": 0.607,
+    "recall": 0.75,
+    "f1": 0.671,
+    "support": 2645
+   },
+   "Shake": {
+    "precision": 0.609,
+    "recall": 0.767,
+    "f1": 0.679,
+    "support": 1015
+   },
+   "Tilt": {
+    "precision": 0.296,
+    "recall": 0.759,
+    "f1": 0.426,
+    "support": 369
+   },
+   "Turn": {
+    "precision": 0.253,
+    "recall": 0.914,
+    "f1": 0.397,
+    "support": 463
+   },
+   "Up/Down": {
+    "precision": 0.019,
+    "recall": 0.2,
+    "f1": 0.035,
+    "support": 25
+   }
+  },
+  "confusion_matrix": [
+   [
+    6956,
+    1244,
+    448,
+    533,
+    926,
+    174
+   ],
+   [
+    371,
+    1985,
+    35,
+    89,
+    89,
+    76
+   ],
+   [
+    17,
+    14,
+    778,
+    32,
+    174,
+    0
+   ],
+   [
+    17,
+    19,
+    0,
+    280,
+    49,
+    4
+   ],
+   [
+    12,
+    4,
+    17,
+    6,
+    423,
+    1
+   ],
+   [
+    2,
+    3,
+    0,
+    7,
+    8,
+    5
+   ]
+  ]
+ },
+ "test": {
+  "accuracy": 0.805,
+  "macro_f1": 0.549,
+  "macro_f1_gestures": 0.483,
+  "per_class": {
+   "None": {
+    "precision": 0.957,
+    "recall": 0.815,
+    "f1": 0.88,
+    "support": 27737
+   },
+   "Nod": {
+    "precision": 0.648,
+    "recall": 0.812,
+    "f1": 0.721,
+    "support": 4810
+   },
+   "Shake": {
+    "precision": 0.689,
+    "recall": 0.691,
+    "f1": 0.69,
+    "support": 1231
+   },
+   "Tilt": {
+    "precision": 0.277,
+    "recall": 0.785,
+    "f1": 0.409,
+    "support": 628
+   },
+   "Turn": {
+    "precision": 0.252,
+    "recall": 0.8,
+    "f1": 0.383,
+    "support": 661
+   },
+   "Up/Down": {
+    "precision": 0.159,
+    "recall": 0.311,
+    "f1": 0.21,
+    "support": 312
+   }
+  },
+  "confusion_matrix": [
+   [
+    22594,
+    2047,
+    340,
+    1100,
+    1226,
+    430
+   ],
+   [
+    696,
+    3908,
+    8,
+    77,
+    53,
+    68
+   ],
+   [
+    157,
+    5,
+    851,
+    54,
+    163,
+    1
+   ],
+   [
+    55,
+    27,
+    3,
+    493,
+    44,
+    6
+   ],
+   [
+    37,
+    16,
+    34,
+    37,
+    529,
+    8
+   ],
+   [
+    79,
+    29,
+    0,
+    20,
+    87,
+    97
+   ]
+  ]
+ },
+ "test_subjects": [
+  "P10",
+  "P2",
+  "P20",
+  "P5"
+ ],
+ "num_samples": {
+  "train": 191550,
+  "val": 14798,
+  "test": 35379
+ }
+}

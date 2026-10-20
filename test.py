@@ -9,17 +9,6 @@ import csv
 from utils import CvFpsCalc
 from model import KeyPointClassifier, PointHistoryClassifier
 
-def select_mode(key, mode):
-    number = -1
-    if 48 <= key <= 57:  # 0 ~ 9
-        number = key - 48
-    if key == 110:  # n
-        mode = 0
-    if key == 107:  # k
-        mode = 1
-    if key == 104:  # h
-        mode = 2
-    return number, mode
 
 
 def calc_bounding_rect(image, landmarks):
@@ -376,18 +365,33 @@ use_static_image_mode = st.sidebar.checkbox("Use Static Image Mode", False)
 min_detection_confidence = st.sidebar.slider("Min Detection Confidence", 0.1, 1.0, 0.7)
 min_tracking_confidence = st.sidebar.slider("Min Tracking Confidence", 0.1, 1.0, 0.5)
 
+# Data logging (replaces the k/h/0-9 keyboard shortcuts, which need an OpenCV window)
+st.sidebar.header("Data Logging")
+mode_options = ["Off", "Logging Key Point", "Logging Point History"]
+mode = mode_options.index(st.sidebar.radio("Mode", mode_options))
+number = -1
+if mode != 0:
+    number = st.sidebar.selectbox("Class ID", list(range(10)))
+    st.sidebar.caption("Every frame with a detected hand is appended to the CSV.")
+
+# Start / Stop (state survives the rerun triggered by changing any widget)
+if "running" not in st.session_state:
+    st.session_state.running = False
+start_col, stop_col = st.sidebar.columns(2)
+if start_col.button("Start Recognition"):
+    st.session_state.running = True
+if stop_col.button("Stop"):
+    st.session_state.running = False
+
 use_brect = True
 
-# Load Models
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    static_image_mode=use_static_image_mode,
-    max_num_hands=1,
-    min_detection_confidence=min_detection_confidence,
-    min_tracking_confidence=min_tracking_confidence,
-)
-keypoint_classifier = KeyPointClassifier()
-point_history_classifier = PointHistoryClassifier()
+
+@st.cache_resource
+def load_classifiers():
+    return KeyPointClassifier(), PointHistoryClassifier()
+
+
+keypoint_classifier, point_history_classifier = load_classifiers()
 
 # Load Labels
 with open('model/keypoint_classifier/keypoint_classifier_label.csv', encoding='utf-8-sig') as f:
@@ -399,92 +403,90 @@ cvFpsCalc = CvFpsCalc(buffer_len=10)
 history_length = 16
 point_history = deque(maxlen=history_length)
 finger_gesture_history = deque(maxlen=history_length)
-mode = 0
-
-# Video Capture
-cap = cv.VideoCapture(device)
-cap.set(cv.CAP_PROP_FRAME_WIDTH, 960)
-cap.set(cv.CAP_PROP_FRAME_HEIGHT, 540)
-
-run = st.sidebar.button("Start Recognition")
 
 frame_placeholder = st.empty()
 
-if run:
-    while cap.isOpened():
-        fps = cvFpsCalc.get()
+if st.session_state.running:
+    mp_hands = mp.solutions.hands
+    hands = mp_hands.Hands(
+        static_image_mode=use_static_image_mode,
+        max_num_hands=1,
+        min_detection_confidence=min_detection_confidence,
+        min_tracking_confidence=min_tracking_confidence,
+    )
 
-        key = cv.waitKey(10)
-        if key == 27:  # ESC
-            break
-        number, mode = select_mode(key, mode)
+    # Video Capture (opened only while running; released even when a rerun interrupts the loop)
+    cap = cv.VideoCapture(device)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, 960)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, 540)
 
+    try:
+        while cap.isOpened():
+            fps = cvFpsCalc.get()
 
-        ret, image = cap.read()
-        if not ret:
-            st.warning("Camera not available!")
-            break
+            ret, image = cap.read()
+            if not ret:
+                st.warning("Camera not available!")
+                st.session_state.running = False
+                break
 
-        image = cv.flip(image, 1)  # Mirror display
-        debug_image = copy.deepcopy(image)
-        
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
-        results = hands.process(image)
+            image = cv.flip(image, 1)  # Mirror display
+            debug_image = copy.deepcopy(image)
 
-        if results.multi_hand_landmarks is not None:
-            for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
-                                                  results.multi_handedness):
-                # Bounding box calculation
-                brect = calc_bounding_rect(debug_image, hand_landmarks)
-                # Landmark calculation
-                landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+            image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+            results = hands.process(image)
 
-                # Conversion to relative coordinates / normalized coordinates
-                pre_processed_landmark_list = pre_process_landmark(landmark_list)
-                pre_processed_point_history_list = pre_process_point_history(debug_image, point_history)
-                # Write to the dataset file
-                logging_csv(number, mode, pre_processed_landmark_list,
+            if results.multi_hand_landmarks is not None:
+                for hand_landmarks, handedness in zip(results.multi_hand_landmarks,
+                                                      results.multi_handedness):
+                    # Bounding box calculation
+                    brect = calc_bounding_rect(debug_image, hand_landmarks)
+                    # Landmark calculation
+                    landmark_list = calc_landmark_list(debug_image, hand_landmarks)
+
+                    # Conversion to relative coordinates / normalized coordinates
+                    pre_processed_landmark_list = pre_process_landmark(landmark_list)
+                    pre_processed_point_history_list = pre_process_point_history(debug_image, point_history)
+                    # Write to the dataset file
+                    logging_csv(number, mode, pre_processed_landmark_list,
+                                pre_processed_point_history_list)
+
+                    # Hand sign classification
+                    hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
+                    if hand_sign_id == 2:  # Point gesture
+                        point_history.append(landmark_list[8])
+                    else:
+                        point_history.append([0, 0])
+
+                    # Finger gesture classification
+                    finger_gesture_id = 0
+                    point_history_len = len(pre_processed_point_history_list)
+                    if point_history_len == (history_length * 2):
+                        finger_gesture_id = point_history_classifier(
                             pre_processed_point_history_list)
 
-                # Hand sign classification
-                hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
-                if hand_sign_id == 2:  # Point gesture
-                    point_history.append(landmark_list[8])
-                else:
-                    point_history.append([0, 0])
+                    # Calculates the gesture IDs in the latest detection
+                    finger_gesture_history.append(finger_gesture_id)
+                    most_common_fg_id = Counter(
+                        finger_gesture_history).most_common()
 
-                # Finger gesture classification
-                finger_gesture_id = 0
-                point_history_len = len(pre_processed_point_history_list)
-                if point_history_len == (history_length * 2):
-                    finger_gesture_id = point_history_classifier(
-                        pre_processed_point_history_list)
+                    # Drawing part
+                    debug_image = draw_bounding_rect(use_brect, debug_image, brect)
+                    debug_image = draw_landmarks(debug_image, landmark_list)
+                    debug_image = draw_info_text(
+                        debug_image,
+                        brect,
+                        handedness,
+                        keypoint_classifier_labels[hand_sign_id],
+                        point_history_classifier_labels[most_common_fg_id[0][0]],
+                    )
+            else:
+                point_history.append([0, 0])
 
-                # Calculates the gesture IDs in the latest detection
-                finger_gesture_history.append(finger_gesture_id)
-                most_common_fg_id = Counter(
-                    finger_gesture_history).most_common()
+            debug_image = draw_point_history(debug_image, point_history)
+            debug_image = draw_info(debug_image, fps, mode, number)
 
-                # Drawing part
-                debug_image = draw_bounding_rect(use_brect, debug_image, brect)
-                debug_image = draw_landmarks(debug_image, landmark_list)
-                debug_image = draw_info_text(
-                    debug_image,
-                    brect,
-                    handedness,
-                    keypoint_classifier_labels[hand_sign_id],
-                    point_history_classifier_labels[most_common_fg_id[0][0]],
-                )
-        else:
-            point_history.append([0, 0])
-
-        debug_image = draw_point_history(debug_image, point_history)
-        debug_image = draw_info(debug_image, fps, mode, number)
-
-        # debug_image = cv.putText(debug_image, keypoint_classifier_labels[hand_sign_id], (50, 50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-        frame_placeholder.image(debug_image, channels="BGR")
-
-    cap.release()
-    cv.destroyAllWindows()
-
+            frame_placeholder.image(debug_image, channels="BGR")
+    finally:
+        cap.release()
+        hands.close()
